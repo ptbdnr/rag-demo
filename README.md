@@ -1,6 +1,6 @@
 # RAG-Chunking: Distributed Document Processing for AI Assistants
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: LGPL-2.1](https://img.shields.io/badge/License-LGPL-yellow.svg)]([https://opensource.org/licenses/MIT](https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html))
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
 A scalable, distributed system for document chunking and processing in Retrieval Augmented Generation (RAG) applications. This repository contains both the high-level architecture and a working implementation of an AI troubleshooting assistant powered by RAG.
@@ -87,4 +87,4 @@ The system is designed for horizontal scaling:
 
 ## License
 
-This project is licensed under the GNU License - see the LICENSE file for details.
+This project is licensed under the LGPL-2.1 License - see the LICENSE file for details.
