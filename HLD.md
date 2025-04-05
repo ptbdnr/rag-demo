@@ -28,6 +28,7 @@ flowchart LR
         s2
         s3
   end
+
     n1["Client"] --> n2
     n2 --> n3
     n3 --> n4 & n5 & n6
@@ -47,6 +48,7 @@ flowchart LR
     n12@{ icon: "azure:monitor"}
     n13@{ icon: "azure:container-registries"}
     n1@{ icon: "aws:res-user"}
+
 ```
 
 ## 2. Core Components
