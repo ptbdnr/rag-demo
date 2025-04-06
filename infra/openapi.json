@@ -1,0 +1,270 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "RAG-Chunking API",
+    "description": "API for a scalable, distributed system for document chunking and processing in Retrieval Augmented Generation (RAG) applications.\nThis API enables efficient document ingestion, parallel processing, semantic embedding generation, vector-based similarity search,\nand intelligent query handling with context awareness.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "RAG-Chunking repo",
+      "url": "https://github.com/ptbdnr/rag-demo"
+    },
+    "license": {
+      "name": "GNU GPLv3",
+      "url": "https://choosealicense.com/licenses/gpl-3.0/"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://todo.com/api",
+      "description": "Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Documents",
+      "description": "Document management and processing operations"
+    }
+  ],
+  "paths": {
+    "/documents/{tenantId}": {
+      "post": {
+        "summary": "Upload and register a new document",
+        "description": "Upload a document for processing into the RAG system",
+        "operationId": "uploadDocument",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "description": "The tenant id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The document file to upload"
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "A readable label (default: timestamp)"
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "description": "Document MIME type (default: 'auto')",
+                    "enum": [
+                      "auto",
+                      "application/pdf",
+                      "text/markdown",
+                      "image/png"
+                    ]
+                  },
+                  "chunking_strategy": {
+                    "type": "string",
+                    "description": "Chunking strategy (default: 'auto')",
+                    "enum": [
+                      "auto",
+                      "fix",
+                      "semantic"
+                    ]
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Document accepted for processing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "413": {
+            "description": "Document too large"
+          }
+        }
+      },
+      "get": {
+        "summary": "List all documents",
+        "description": "Retrieve a list of all documents in the system",
+        "operationId": "listDocuments",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "description": "The tenant id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by processing status",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "processing",
+                "completed",
+                "failed"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "documents": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DocumentResponse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a document",
+        "description": "Remove a document and all associated chunks and embeddings",
+        "operationId": "deleteDocument",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "name": "tenantId",
+            "in": "path",
+            "description": "The tenant id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "docId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the document"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Document successfully deleted"
+          },
+          "404": {
+            "description": "Document not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DocumentResponse": {
+        "type": "object",
+        "properties": {
+          "docId": {
+            "type": "string",
+            "description": "Unique document identifier"
+          },
+          "tenantId": {
+            "type": "string",
+            "description": "Tenant Id"
+          },
+          "label": {
+            "type": "string",
+            "description": "A readable label"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "Document MIME type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "failed"
+            ],
+            "description": "Processing status"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Document creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Document last update timestamp"
+          },
+          "chunking_strategy": {
+            "type": "string",
+            "description": "The applied chunking strategy"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    },
+    {
+      "ApiKeyAuth": []
+    }
+  ]
+}
