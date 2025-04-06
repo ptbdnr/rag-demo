@@ -1,0 +1,44 @@
+---
+config:
+  look: neo
+---
+flowchart LR
+ subgraph s2[" "]
+        n2["API"]
+        n3["WorkflowOrchestrator"]
+        n4["DocLoader"]
+        n5["DocSplitter"]
+        n6["Encoder"]
+        n7["OCR"]
+        n8["ObjectStore"]
+        n9["TextAndVectorDB"]
+        n10["EmbeddingModel"]
+  end
+ subgraph s3[" "]
+        n11["Keys"]
+        n12["Monitor"]
+        n13["ContanierRegistry"]
+  end
+ subgraph s1["Cloud"]
+        s2
+        s3
+  end
+    n1["Client"] --> n2
+    n2 --> n3
+    n3 --> n4 & n5 & n6
+    n4 --> n7 & n8
+    n5 --> n8 & n9
+    n6 --> n9 & n10
+    n2@{ icon: "fa:building"}
+    n3@{ icon: "fa:map"}
+    n4@{ icon: "fa:circle-play"}
+    n5@{ icon: "fa:circle-play"}
+    n6@{ icon: "fa:circle-play"}
+    n7@{ icon: "fa:eye"}
+    n8@{ icon: "fa:folder-open"}
+    n9@{ icon: "fa:clone"}
+    n10@{ icon: "fa:object-ungroup"}
+    n11@{ icon: "fa:address-card"}
+    n12@{ icon: "fa:newspaper"}
+    n13@{ icon: "fa:paper-plane"}
+    n1@{ icon: "fa:circle-user"}

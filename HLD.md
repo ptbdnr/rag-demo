@@ -2,54 +2,7 @@
 
 This document explains the architectural design for a distributed document chunking and retrieval augmented generation (RAG) system that efficiently processes large volumes of documents while enabling scalability and parallelism.
 
-```mermaid
----
-config:
-  look: neo
----
-flowchart LR
- subgraph s2[" "]
-        n2["API"]
-        n3["WorkflowOrchestrator"]
-        n4["DocLoader"]
-        n5["DocSplitter"]
-        n6["Encoder"]
-        n7["OCR"]
-        n8["ObjectStore"]
-        n9["TextAndVectorDB"]
-        n10["EmbeddingModel"]
-  end
- subgraph s3[" "]
-        n11["Keys"]
-        n12["Monitor"]
-        n13["ContanierRegistry"]
-  end
- subgraph s1["Cloud"]
-        s2
-        s3
-  end
-
-    n1["Client"] --> n2
-    n2 --> n3
-    n3 --> n4 & n5 & n6
-    n4 --> n7 & n8
-    n5 --> n8 & n9
-    n6 --> n9 & n10
-    n2@{ icon: "azure:api-management-services"}
-    n3@{ icon: "azure:logic-apps"}
-    n4@{ icon: "azure:function-apps"}
-    n5@{ icon: "azure:function-apps"}
-    n6@{ icon: "azure:function-apps"}
-    n7@{ icon: "azure:form-recognizers"}
-    n8@{ icon: "azure:storage-accounts"}
-    n9@{ icon: "azure:azure-cosmos-db"}
-    n10@{ icon: "azure:ai-studio"}
-    n11@{ icon: "azure:key-vaults"}
-    n12@{ icon: "azure:monitor"}
-    n13@{ icon: "azure:container-registries"}
-    n1@{ icon: "aws:res-user"}
-
-```
+![Architecture Diagram](https://github.com/ptbdnr/rag/blob/main/static/hld.mermaid.png)
 
 ## 2. Core Components
 

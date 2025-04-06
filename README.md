@@ -19,7 +19,7 @@ Perfect for building domain-specific AI assistants that can leverage technical d
 
 ## Architecture
 
-![Architecture Diagram](https://github.com/ptbdnr/rag/blob/main/rag-hld_v01.png)
+![Architecture Diagram](https://github.com/ptbdnr/rag/blob/main/static/rag-hld_v01.png)
 
 The system consists of several key components:
 
