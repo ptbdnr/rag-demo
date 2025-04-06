@@ -27,8 +27,8 @@ Create resource group(s) on Azure
 
 Create resource(s) within an existing resource group
 ```sh
-RESOURCE_GROUP_NAME="ragdemo"
-TEMPLATE_FILEPATH="main.bicep"
-PARAMETERS_FILEPATH="main.bicepparam"
-az deployment group create --name 'ragdemo-'$(date +"%Y-%b-%d") --resource-group $RESOURCE_GROUP_NAME --template-file $TEMPLATE_FILEPATH --parameters $PARAMETERS_FILEPATH 
+export RESOURCE_GROUP_NAME="ragdemo"
+export TEMPLATE_FILEPATH="main.bicep"
+export PARAMETERS_FILEPATH="main.bicepparam"
+az deployment group create --name $RESOURCE_GROUP_NAME'-'$(date +"%Y-%b-%d") --resource-group $RESOURCE_GROUP_NAME --template-file $TEMPLATE_FILEPATH --parameters $PARAMETERS_FILEPATH 
 ```
