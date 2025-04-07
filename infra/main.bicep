@@ -14,9 +14,6 @@ param rLocation string
 @description('OpenAPI specification')
 param openapi string
 
-@description('Logic App schema')
-param logicAppSchema string
-
 @description('Publisher name for API Management')
 param publisherName string
 
@@ -37,15 +34,13 @@ func nohyphen(input string) string => toLower(replace(input, '-', ''))
 // Define the IDs of the roles we need to assign to our managed identities.
 var storageBlobDataOwnerRoleId  = 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b'
 var storageBlobDataContributorRoleId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+var storageQueueDataContributorId = '974c5e8b-45b9-4653-ba55-5f855dd0fb88' // for Azure Durable Functions
+// var storageTableDataContributorId = '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3'
 var monitoringMetricsPublisherId = '3913510d-42f4-4e42-8a64-420c390055eb'
 
-var funcDocLoaderAppName = addPrefixAndSuffix('func-docloader')
-var funcDocSplitterAppName = addPrefixAndSuffix('func-docsplitter')
-var funcEncoderAppName = addPrefixAndSuffix('func-encoder')
+var funcDocProcessorAppName = addPrefixAndSuffix('func-docprocessor')
 
-var funcDocLoaderSaContainerName = 'func-docloader-package-${rNameSuffix}'
-var funcDocSplitterSaContainerName = 'func-docsplitter-package-${rNameSuffix}'
-var funcEncoderSaContainerName = 'func-encoder-package-${rNameSuffix}'
+var funcDocProcessorSaContainerName = 'func-docprocessor-package-${rNameSuffix}'
 
 //********************************************
 // Azure resources
@@ -90,24 +85,19 @@ resource sa 'Microsoft.Storage/storageAccounts@2024-01-01' = {
     properties: {
       deleteRetentionPolicy: {}
     }
-    resource deploymentDocLoaderContainer 'containers' = {
-      name: funcDocLoaderSaContainerName
+    resource deploymentDocProcessorContainer 'containers' = {
+      name: funcDocProcessorSaContainerName
       properties: {
         publicAccess: 'None'
       }
     }
-    resource deploymentDocSplitterContainer 'containers' = {
-        name: funcDocSplitterSaContainerName
+
+    resource objectStoreContainer 'containers' = {
+        name: 'objectstore'
         properties: {
           publicAccess: 'None'
         }
-    }
-    resource deploymentEncoderContainer 'containers' = {
-        name: funcEncoderSaContainerName
-        properties: {
-            publicAccess: 'None'
-        }
-    }
+      }
   }
 }
 
@@ -130,9 +120,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
     location: rLocation
     kind: 'web'
     tags: {
-        'hidden-link:${resourceId('Microsoft.Web/sites', funcDocLoaderAppName)}': 'Resource'
-        'hidden-link:${resourceId('Microsoft.Web/sites', funcDocSplitterAppName)}': 'Resource'
-        'hidden-link:${resourceId('Microsoft.Web/sites', funcEncoderAppName)}': 'Resource'
+        'hidden-link:${resourceId('Microsoft.Web/sites', funcDocProcessorAppName)}': 'Resource'
     }
     properties: {
         Application_Type: 'web'
@@ -154,7 +142,7 @@ resource funcUAI 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' =
 // Role Assignments
 // Assign the User Assigned Identity to the Storage Account
 resource roleAssignmentBlobDataOwner 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-    name: guid(subscription().id, sa.id, funcUAI.id, 'Storage Blob Data Owner')
+    name: guid(subscription().id, sa.id, funcUAI.id, 'BlobDataOwner')
     scope: sa
     properties: {
         roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataOwnerRoleId)
@@ -163,9 +151,30 @@ resource roleAssignmentBlobDataOwner 'Microsoft.Authorization/roleAssignments@20
     }
 }
 
-// Assign the User Assigned Identity to the Storage Account
-resource roleAssignmentBlob 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-    name: guid(subscription().id, sa.id, funcUAI.id, 'Storage Blob Data Contributor')
+// required for Azure Durable Functions
+resource roleAssignmentQueueDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+    name: guid(subscription().id, sa.id, funcUAI.id, 'QueueDataContributor')
+    scope: sa
+    properties: {
+        roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageQueueDataContributorId)
+        principalId: funcUAI.properties.principalId
+        principalType: 'ServicePrincipal'
+    }
+}
+
+// optional
+// resource roleAssignmentTableDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//     name: guid(subscription().id, sa.id, funcUAI.id, 'TableDataContributor')
+//     scope: sa
+//     properties: {
+//         roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageTableDataContributorId)
+//         principalId: funcUAI.properties.principalId
+//         principalType: 'ServicePrincipal'
+//     }
+// }
+
+resource roleAssignmentBlobDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+    name: guid(subscription().id, sa.id, funcUAI.id, 'BlobDataContributor')
     scope: sa
     properties: {
         roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageBlobDataContributorRoleId)
@@ -174,8 +183,9 @@ resource roleAssignmentBlob 'Microsoft.Authorization/roleAssignments@2022-04-01'
     }
 }
 
-resource roleAssignmentAppInsights 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-    name: guid(subscription().id, applicationInsights.id, funcUAI.id, 'Monitoring Metrics Publisher')
+// Assign the User Assigned Identity to the Application Insights
+resource roleAssignmentMetricsPublisher 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+    name: guid(subscription().id, applicationInsights.id, funcUAI.id, 'MetricsPublisher')
     scope: applicationInsights
     properties: {
         roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', monitoringMetricsPublisherId)
@@ -189,13 +199,13 @@ resource roleAssignmentAppInsights 'Microsoft.Authorization/roleAssignments@2022
 //********************************************
 
 // App Service Plan for Function App
-resource asp 'Microsoft.Web/serverfarms@2024-04-01' = {
-    name: addPrefixAndSuffix('asp')
+resource aspDocProcessor 'Microsoft.Web/serverfarms@2024-04-01' = {
+    name: addPrefixAndSuffix('asp-docprocessor')
     location: rLocation
     kind: 'functionapp'
     sku: {
-      name: 'P1v3'
-      tier: 'FlexConsumption'
+        name: 'FC1'
+        tier: 'FlexConsumption'
     }
     properties: {
       reserved: true
@@ -203,8 +213,8 @@ resource asp 'Microsoft.Web/serverfarms@2024-04-01' = {
 }
 
 // Function App (Python 3.11)
-resource funcDocLoader 'Microsoft.Web/sites@2024-04-01' = {
-    name: funcDocLoaderAppName
+resource funcDocProcessor 'Microsoft.Web/sites@2024-04-01' = {
+    name: funcDocProcessorAppName
     location: rLocation
     kind: 'functionapp,linux'
     identity: {
@@ -214,15 +224,21 @@ resource funcDocLoader 'Microsoft.Web/sites@2024-04-01' = {
         }
     }
     properties: {
-        serverFarmId: asp.id
+        serverFarmId: aspDocProcessor.id
         siteConfig: {
             minTlsVersion: '1.2'
+            cors: {
+                allowedOrigins: [
+                  'https://portal.azure.com'
+                ]
+                supportCredentials: true
+            }
         }
         functionAppConfig: {
             deployment: {
                 storage: {
                     type: 'blobContainer'
-                    value: '${sa.properties.primaryEndpoints.blob}${funcDocLoaderSaContainerName}'
+                    value: '${sa.properties.primaryEndpoints.blob}${funcDocProcessorSaContainerName}'
                     authentication: {
                         type: 'UserAssignedIdentity'
                         userAssignedIdentityResourceId: funcUAI.id
@@ -244,118 +260,11 @@ resource funcDocLoader 'Microsoft.Web/sites@2024-04-01' = {
         name: 'appsettings'
         properties: {
             AzureWebJobsStorage__accountName: sa.name
-            AzureWebJobsStorage__credential : 'managedidentity'
+            AzureWebJobsStorage__credential: 'managedidentity'
             AzureWebJobsStorage__clientId: funcUAI.properties.clientId
             APPLICATIONINSIGHTS_INSTRUMENTATIONKEY: applicationInsights.properties.InstrumentationKey
             APPLICATIONINSIGHTS_AUTHENTICATION_STRING: 'ClientId=${funcUAI.properties.clientId};Authorization=AAD'
-        }
-    }
-
-    dependsOn: [
-        applicationInsights
-    ]
-}
-
-// Function App (Python 3.11)
-resource funcDocSplitter 'Microsoft.Web/sites@2024-04-01' = {
-    name: funcDocSplitterAppName
-    location: rLocation
-    kind: 'functionapp,linux'
-    identity: {
-        type: 'UserAssigned'
-        userAssignedIdentities: {
-            '${funcUAI.id}':{}
-        }
-    }
-    properties: {
-        serverFarmId: asp.id
-        siteConfig: {
-            minTlsVersion: '1.2'
-        }
-        functionAppConfig: {
-            deployment: {
-                storage: {
-                    type: 'blobContainer'
-                    value: '${sa.properties.primaryEndpoints.blob}${funcDocSplitterSaContainerName}'
-                    authentication: {
-                        type: 'UserAssignedIdentity'
-                        userAssignedIdentityResourceId: funcUAI.id
-                    }
-                }
-            }
-            scaleAndConcurrency: {
-                maximumInstanceCount: 100
-                instanceMemoryMB: 4096
-            }
-            runtime: {
-                name: 'python'
-                version: '3.11'
-            }
-        }
-    }
-
-    resource configAppSettings 'config' = {
-        name: 'appsettings'
-        properties: {
-            AzureWebJobsStorage__accountName: sa.name
-            AzureWebJobsStorage__credential : 'managedidentity'
-            AzureWebJobsStorage__clientId: funcUAI.properties.clientId
-            APPLICATIONINSIGHTS_INSTRUMENTATIONKEY: applicationInsights.properties.InstrumentationKey
-            APPLICATIONINSIGHTS_AUTHENTICATION_STRING: 'ClientId=${funcUAI.properties.clientId};Authorization=AAD'
-        }
-    }
-
-    dependsOn: [
-        applicationInsights
-    ]
-}
-
-// Function App (Python 3.11)
-resource funcEncoder 'Microsoft.Web/sites@2024-04-01' = {
-    name: funcEncoderAppName
-    location: rLocation
-    kind: 'functionapp,linux'
-    identity: {
-        type: 'UserAssigned'
-        userAssignedIdentities: {
-            '${funcUAI.id}':{}
-        }
-    }
-    properties: {
-        serverFarmId: asp.id
-        siteConfig: {
-            minTlsVersion: '1.2'
-        }
-        functionAppConfig: {
-            deployment: {
-                storage: {
-                    type: 'blobContainer'
-                    value: '${sa.properties.primaryEndpoints.blob}${funcEncoderSaContainerName}'
-                    authentication: {
-                        type: 'UserAssignedIdentity'
-                        userAssignedIdentityResourceId: funcUAI.id
-                    }
-                }
-            }
-            scaleAndConcurrency: {
-                maximumInstanceCount: 100
-                instanceMemoryMB: 4096
-            }
-            runtime: {
-                name: 'python'
-                version: '3.11'
-            }
-        }
-    }
-
-    resource configAppSettings 'config' = {
-        name: 'appsettings'
-        properties: {
-            AzureWebJobsStorage__accountName: sa.name
-            AzureWebJobsStorage__credential : 'managedidentity'
-            AzureWebJobsStorage__clientId: funcUAI.properties.clientId
-            APPLICATIONINSIGHTS_INSTRUMENTATIONKEY: applicationInsights.properties.InstrumentationKey
-            APPLICATIONINSIGHTS_AUTHENTICATION_STRING: 'ClientId=${funcUAI.properties.clientId};Authorization=AAD'
+            AzureWebJobsFeatureFlags: 'EnableWorkerIndexing'
         }
     }
 
@@ -434,6 +343,6 @@ resource apimapiDocProcessing 'Microsoft.ApiManagement/service/apis@2024-05-01' 
         subscriptionRequired: true
         format: 'openapi+json'
         value: openapi
-        serviceUrl: 'https://${funcDocLoader.properties.defaultHostName}/api/search'
+        serviceUrl: 'https://${funcDocProcessor.properties.defaultHostName}/api'
     }
 }

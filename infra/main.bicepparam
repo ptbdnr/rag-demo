@@ -14,6 +14,3 @@ param publisherEmail = 'foo@bar.buz'
 
 @description('The OpenAPI document to be used for the API Management service')
 param openapi = loadTextContent('./openapi.json')
-
-@description('Logic App schema')
-param logicAppSchema = loadTextContent('./logicapp.json')
