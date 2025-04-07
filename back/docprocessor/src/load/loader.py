@@ -1,4 +1,5 @@
 import logging
+
 import requests
 
 from src.load.mistral_loader import MistralLoader
@@ -36,7 +37,10 @@ def doc_loader(
     file_type_mappings = {
         'txt': [TextLoader],
         'text/plain': [TextLoader],
+        'text/markdown': [TextLoader],
         'pdf': [MistralLoader],
+        'application/pdf': [MistralLoader],
+        'image/png': [MistralLoader],
         'png': [MistralLoader],
     }
 
