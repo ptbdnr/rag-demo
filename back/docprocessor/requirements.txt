@@ -1,0 +1,21 @@
+# DO NOT include azure-functions-worker in this file
+# The Python Worker is managed by Azure Functions platform
+# Manually managing azure-functions-worker may cause unexpected issues
+
+python-dotenv==1.0.1
+
+azure-functions==1.22.1
+azure-functions-durable==1.2.10
+
+langchain==0.3.7
+langchain-community==0.3.7
+
+pypdf==5.1.0
+docx2txt==0.8
+unstructured==0.16.5
+python-pptx==1.0.2
+mistralai==1.5.1
+
+pytest==8.3.5
+
+azure-storage-blob==12.19.1
