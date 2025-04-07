@@ -83,43 +83,43 @@ def doc_processing_orchestrator(context):
     return {"content": "done"}
 
 # Activity
-@dur_app.activity_trigger(input_name="arg_text")
-def load(arg_text: str):
+@dur_app.activity_trigger(input_name="payload")
+def load(payload: str):
     """Activity function to load documents."""
     logger.info("Function (%s) started...", __name__)
     req = func.HttpRequest(
         method="POST",
         url="https://example.com",
         route_params={"tenant_id": "unknown"},
-        body=arg_text.encode("utf-8"),
+        body=payload.encode("utf-8"),
         headers={},
     )
     tenant_id = req.route_params.get("tenant_id", 'unknown')
     return load_api_handler(req, tenant_id, VERSION)
 
-@dur_app.activity_trigger(input_name="arg_text")
-def split(arg_text: str):
+@dur_app.activity_trigger(input_name="payload")
+def split(payload: str):
     """Activity function to split documents."""
     logger.info("Function (%s) started...", __name__)
     req = func.HttpRequest(
         method="POST",
         url="https://example.com",
         route_params={"tenant_id": "unknown"},
-        body=arg_text.encode("utf-8"),
+        body=payload.encode("utf-8"),
         headers={},
     )
     tenant_id = req.route_params.get("tenant_id", 'unknown')
     return split_api_handler(req, tenant_id, VERSION)
 
-@dur_app.activity_trigger(input_name="arg_text")
-def encode(arg_text: str):
+@dur_app.activity_trigger(input_name="payload")
+def encode(payload: str):
     """Activity function to encode documents."""
     logger.info("Function (%s) started...", __name__)
     req = func.HttpRequest(
         method="POST",
         url="https://example.com",
         route_params={"tenant_id": "unknown"},
-        body=arg_text.encode("utf-8"),
+        body=payload.encode("utf-8"),
         headers={},
     )
     tenant_id = req.route_params.get("tenant_id", 'unknown')
