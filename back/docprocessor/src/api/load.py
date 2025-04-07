@@ -1,7 +1,9 @@
+from __future__ import annotations
 import json
 import uuid
 import logging
 from datetime import datetime
+from typing import Optional
 
 import azure.functions as func
 from src.load.loader import download_file, doc_loader
@@ -30,9 +32,15 @@ def api_handler(
         'get_body': req.get_body().decode()
     }, indent=2))
 
-    req_body = req.get_body().decode()
-    logger.info("(%s) request body: %s", version, req_body)
-    file = req_body.get('url', None)
+     # Parse request body
+    file: Optional[str] = None
+    try:
+        req_body = req.get_json()
+    except ValueError:
+        pass
+    else:
+        file = req_body.get("url", req_body.get("content", None))
+    
     if file is None:
         return func.HttpResponse(
             body="Invalid input",
@@ -40,6 +48,7 @@ def api_handler(
         )
     
     if file.startswith("https://") or file.startswith("http://"):
+        logger.info("(%s) download: %s ...", version, file)
         file_content = download_file(url=file)
     else:
         file_content = file
