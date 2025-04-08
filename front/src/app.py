@@ -25,6 +25,10 @@ def initialize_session_state() -> None:
         "OPENAI_MODEL": "OPENAI_MODEL",
         "BACK_API_BASE": "BACK_API_BASE",
         "TENANT_ID": "TENANT_ID",
+        "COSMOSDB_NOSQL_HOST": "COSMOSDB_NOSQL_HOST",
+        "COSMOSDB_NOSQL_KEY": "COSMOSDB_NOSQL_KEY",
+        "COSMOSDB_DATABASE_ID": "COSMOSDB_DATABASE_ID",
+        "COSMOSDB_CONTAINER_ID": "COSMOSDB_CONTAINER_ID",
     }
     for var, env in env_vars.items():
         if var not in st.session_state:
@@ -38,7 +42,7 @@ def initialize_session_state() -> None:
 # Set the page layout to wide
 st.set_page_config(
     page_title="Snippets",
-    page_icon="static/kainos_icon.png", # or "🔥"
+    page_icon="🔥",
     layout="wide",
 )
 
@@ -48,16 +52,22 @@ initialize_session_state()
 theme = st_theme()
 if theme and theme.get("base") == "dark":
     st.logo(
-        image='media/Smiley.svg.png',
+        image='media/avatar_clay_black.jpg',
         size='medium',
-        link='https://en.wikipedia.org/wiki/Smiley',
+        link='https://github.com/ptbdnr',
+    )
+else:
+    st.logo(
+        image='media/avatar_clay_white.jpg',
+        size='medium',
+        link='https://github.com/ptbdnr',
     )
 
 # Main Streamlit app starts here
 with st.container():
     tab1, tab2, tab3 = st.tabs([
         "📙 Instruction",
-        "📁 Knowledgebase",
+        "📁 Knowledge",
         "💬 Chat"
     ])
 
