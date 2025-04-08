@@ -19,6 +19,25 @@ COSMOSDB_DATABASE_ID = os.getenv("COSMOSDB_DATABASE_ID")
 COSMOSDB_CONTAINER_ID = os.getenv("COSMOSDB_CONTAINER_ID")
 COSMOSDB_PARTITION_KEY = "/tenantId"
 ALLOWED_SELECT_FIELDS = ['id', 'tenantId', 'documentId', 'text', 'vector']
+VECTOR_EMBEDDING_POLICY = {
+    "vectorEmbeddings": [{
+        "path": "/" + 'vector',
+        "dataType": 'float32',
+        "distanceFunction": 'euclidean',
+        "dimensions": 1024,
+    }],
+}
+INDEXING_POLICY = {
+    "includedPaths": [{"path": "/*"}],
+    "excludedPaths": [{
+        "path": '/"_etag"/?',
+        "path": "/" + 'vector' + "/*",
+    }],
+    "vectorIndexes": [{
+        "path": "/" + 'vector',
+        "type": "quantizedFlat",  # one of ['flat', 'quantizedFlat', 'DiscANN']
+    }],
+}
 
 class CosmosDB:
     """CosmosDB data store."""
@@ -56,8 +75,8 @@ class CosmosDB:
 
     def create(
         self,
-        indexing_policy: Optional[dict] = None,
-        vector_embedding_policy: Optional[dict] = None,
+        indexing_policy: Optional[dict] = INDEXING_POLICY,
+        vector_embedding_policy: Optional[dict] = VECTOR_EMBEDDING_POLICY,
         offer_throughput: Optional[int] = None,
         drop_old_database: bool = False,
         drop_old_container: bool = False,
