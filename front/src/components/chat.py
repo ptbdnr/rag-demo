@@ -38,7 +38,7 @@ def stream_response(messages) -> str:
     )
 
 def component() -> None:
-    """Render the chat component."""
+    """Main component for the tab."""
     
     # Initialize chat history
     if "messages" not in st.session_state:

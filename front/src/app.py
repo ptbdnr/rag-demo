@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from streamlit_theme import st_theme
 
 from components.instruction import component as instruction_component
+from components.knowledge import component as knowledge_component
 from components.chat import component as chat_component
 
 # Load environment variables
@@ -22,6 +23,8 @@ def initialize_session_state() -> None:
     env_vars = {
         "OPENAI_API_KEY": "OPENAI_API_KEY",
         "OPENAI_MODEL": "OPENAI_MODEL",
+        "BACK_API_BASE": "BACK_API_BASE",
+        "TENANT_ID": "TENANT_ID",
     }
     for var, env in env_vars.items():
         if var not in st.session_state:
@@ -51,9 +54,21 @@ if theme and theme.get("base") == "dark":
     )
 
 # Main Streamlit app starts here
+with st.container():
+    tab1, tab2, tab3 = st.tabs([
+        "📙 Instruction",
+        "📁 Knowledgebase",
+        "💬 Chat"
+    ])
 
-instruction_component()
-chat_component()
+    with tab1:
+        instruction_component()
+
+    with tab2:
+        knowledge_component()
+
+    with tab3:
+        chat_component()
 
 # Custom CSS
 css = """

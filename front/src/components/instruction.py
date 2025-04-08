@@ -2,6 +2,7 @@ import streamlit as st
 
 
 def component() -> None:
+    """Main component for the tab."""
     st.header("Simple RAG Chatbot")
 
     st.markdown(
