@@ -5,6 +5,7 @@ import dotenv
 from mistralai import Mistral
 
 from src.models.chunk import Chunk
+from src.store.cosmosdb import CosmosDB
 
 dotenv.load_dotenv(".env.local")
 
@@ -15,24 +16,41 @@ API_KEY = os.environ["MISTRAL_API_KEY"]
 MODEL_NAME = "mistral-embed"
 
 def doc_encoder(
-        chunks: list[Chunk],
+        tenant_id: str,
+        document_id: str,
  )-> dict:
     """Encode the content into a vector representation."""
-    mistral_client = Mistral(api_key=API_KEY)
 
-    text_chunks = [chunk.text for chunk in chunks]
-    
+    # load the content
+    cosmos_db = CosmosDB()
+    items = cosmos_db.find(filter={
+        "tenantId": tenant_id,
+        "documentId": document_id,
+    })
+    logger.info("Loaded %d items: %s", len(items), list(items))
+
+    # encode the content
+    text_chunks = [item['text'] for item in items]
+    mistral_client = Mistral(api_key=API_KEY)
     embeddings_batch_response = mistral_client.embeddings.create(
         model=MODEL_NAME,
         inputs=text_chunks,
     )
+    vector_chunks = [e.embedding for e in embeddings_batch_response.data]
 
-    vector_chunks = embeddings_batch_response.data
-    text_vector_pairs = [
-        Chunk(text=text_chunks[idx], vector=vector_chunks[idx])
-        for idx in range(len(text_chunks))
+    # pair the text with the vectors
+    for idx, item in enumerate(items):
+        item["vector"] = vector_chunks[idx]
+        cosmos_db.upsert(item)
+
+    chunks = [
+        Chunk(text=item['text'], vector=item['vector'])
+        for item in items
     ]
 
     return {
-        "chunks": chunks,
+        "tenantId": tenant_id,
+        "documentId": document_id,
+        "embedding_model": MODEL_NAME,
+        "chunks": [chunk.to_dict() for chunk in chunks],
     }

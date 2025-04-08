@@ -4,6 +4,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from src.models.chunk import Chunk
 from src.store.blob import load
+from src.store.cosmosdb import CosmosDB
 
 MAX_CHUNK_SIZE = 800
 MAX_OVERLAP = 200
@@ -43,8 +44,22 @@ def doc_splitter(
     logging.info("Raw chunks: %s", [c for c in raw_chunks])
 
     chunks = [Chunk(text=c) for c in raw_chunks]
+    cosmos_db = CosmosDB()
+    cosmos_db.create(
+       drop_old_database=False,
+       drop_old_container=False,
+    )
+    for idx, chunk in enumerate(chunks):
+        cosmos_db.upsert(payload={
+            "id": f"{document_id}_{idx}",
+            "tenantId": tenant_id,
+            "documentId": document_id,
+            "text": chunk.text,
+        })
 
     return {
+        "tenantId": tenant_id,
+        "documentId": document_id,
         "chunks": [c.to_dict() for c in chunks],
         "chunkingStrategy": chunking_strategy
     }

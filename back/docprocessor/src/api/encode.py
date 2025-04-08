@@ -1,7 +1,10 @@
+from __future__ import annotations
 import json
 import logging
+from typing import Optional
 
 import azure.functions as func
+from src.encode.encoder import doc_encoder
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -27,9 +30,32 @@ def api_handler(
         'get_body': req.get_body().decode()
     }, indent=2))
 
-    response_body = {
-        'content': "foo"
-    }
+    # Parse request body
+    document_id: Optional[str] = None
+    try:
+        req_body = req.get_json()
+    except ValueError:
+        logger.info("(%s) Invalid JSON body", version)    
+        document_id = req.get_body()
+    else:
+        document_id = req_body.get("documentId", None)
+    
+    # Validate input
+    if document_id is None:
+        return func.HttpResponse(
+            body="Invalid input",
+            status_code=400,
+        )
+    
+    # Log the input
+    logger.info("(%s) tenant_id: %s", version, tenant_id)
+    logger.info("(%s) document_id: %s", version, document_id)
+
+    # encoder the document chunks and save them to vector db
+    response_body = doc_encoder(
+        tenant_id=tenant_id,
+        document_id=document_id,
+    )
 
     return func.HttpResponse(
         body=json.dumps(response_body, indent=2),
