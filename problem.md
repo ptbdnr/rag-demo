@@ -13,6 +13,7 @@ Sample Data:
 * non-English kitchen whitegood manual
 * car manual
 * tv manual
+* [pool maintenance doc](https://www.nitt.edu/home/students/facilitiesnservices/sportscenter/swimmingpool/SwimmingPoolMaintenance.pdf)
 
 ### Technical Components
 
