@@ -29,6 +29,8 @@ def initialize_session_state() -> None:
         "COSMOSDB_NOSQL_KEY": "COSMOSDB_NOSQL_KEY",
         "COSMOSDB_DATABASE_ID": "COSMOSDB_DATABASE_ID",
         "COSMOSDB_CONTAINER_ID": "COSMOSDB_CONTAINER_ID",
+        "MISTRAL_API_KEY": "MISTRAL_API_KEY",
+        "MISTRAL_MODEL_NAME": "MISTRAL_MODEL_NAME",
     }
     for var, env in env_vars.items():
         if var not in st.session_state:
