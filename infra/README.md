@@ -48,4 +48,3 @@ Function App:
 * in Settins / Environment variables add key-value pairs (see `.env.sample` in /back directory)
 * in API / CORS enable Access-Control-Allow-Credential and add to Allowed Origins: `https://portal.azure.com`
 * activate Application Inisghts
-* 
