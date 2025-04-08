@@ -50,8 +50,8 @@ The system consists of several key components:
 
 ```bash
 # Clone the repository
-git clone https://github.com/ptbdnr/rag.git
-cd rag
+git clone https://github.com/ptbdnr/rag-demo.git
+cd rag-demo
 
 # Create and activate virtual environment
 python -m venv venv
@@ -63,7 +63,8 @@ pip install -r requirements.txt
 
 ### Quick Start
 
-TODO
+See quick README.md in `/back` and `/front` directories.
+For deployment on Azure see README.md in `/infra` directory.
 
 ## Example Use Case: Appliance Troubleshooting Assistant
 
