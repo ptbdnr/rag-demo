@@ -101,6 +101,77 @@ resource sa 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   }
 }
 
+// Cosmos DB - NoSQL
+resource nosqlAccount 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
+    name: addPrefixAndSuffix('nosql')
+    location: rLocation
+    kind: 'GlobalDocumentDB'
+    properties: {
+      consistencyPolicy: {
+        defaultConsistencyLevel: 'Eventual'
+      }
+      locations: [{
+        locationName: rLocation
+        failoverPriority: 0
+        isZoneRedundant: false
+      }]
+      databaseAccountOfferType: 'Standard'
+      enableAutomaticFailover: true
+      apiProperties: {
+        serverVersion: '4.2'
+      }
+      capabilities: [
+        {
+          name: 'DisableRateLimitingResponses'
+        }
+      ]
+    }
+  }
+  
+  resource nosqlKnowledgeDatabase 'Microsoft.DocumentDB/databaseAccounts/mongodbDatabases@2022-05-15' = {
+    parent: nosqlAccount
+    name: rgName
+    properties: {
+      resource: {
+        id: '_id'
+      }
+      options: {
+        throughput: 400
+      }
+    }
+  }
+  
+  var nosqlKnowledgeCollectionName = 'collection1'
+  resource nosqlCustomerCollectionCustomers 'Microsoft.DocumentDb/databaseAccounts/mongodbDatabases/collections@2022-05-15' = {
+    parent: nosqlKnowledgeDatabase
+    name: nosqlKnowledgeCollectionName
+    properties: {
+      resource: {
+        id: nosqlKnowledgeCollectionName
+        shardKey: {
+          _shard_key: 'Hash'
+        }
+        indexes: [
+          {
+            key: {
+              keys: [
+                '_id'
+                '_shard_key'
+              ]
+            }
+          }
+          {
+            key: {
+              keys: [
+                '$**'
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
     name: addPrefixAndSuffix('log-analytics')
     location: rLocation
