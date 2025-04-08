@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 import requests
 
@@ -23,12 +24,12 @@ def download_file(
         raise ValueError(f"Failed to download file. Status code: {response.status_code}")
 
 def doc_loader(
-        doc_id: str,
+        document_id: str,
         tenant_id: str,
         label: str,
         file_content: bytes,
         mime_type: str = 'auto',
-        created_at: str = None,
+        created_at: datetime = None,
         chunking_strategy: str = 'auto',
         
 ) -> dict:
@@ -37,11 +38,14 @@ def doc_loader(
     file_type_mappings = {
         'txt': [TextLoader],
         'text/plain': [TextLoader],
+        'plain': [TextLoader],
         'text/markdown': [TextLoader],
+        'markdown': [TextLoader],
         'pdf': [MistralLoader],
         'application/pdf': [MistralLoader],
         'image/png': [MistralLoader],
         'png': [MistralLoader],
+        "octet-stream": [MistralLoader],
     }
 
     # iterate over the file type mappings
@@ -55,11 +59,12 @@ def doc_loader(
                 try:
                     if loader_cls == TextLoader:
                         content = TextLoader().load(file_content)
-                        page_contents.append(PageContent(content=content))
+                        page_contents.append(PageContent(page_content=content))
                         loaded = True
                     elif loader_cls == MistralLoader:
-                        content = MistralLoader().load(file_content)
-                        page_contents.append(PageContent(content=content))
+                        contents = MistralLoader().load(file_content)
+                        for c in contents:
+                            page_contents.append(PageContent(page_content=c))
                         loaded = True
                     else:
                         raise ValueError(f"Unsupported loader class: {loader_cls}")
@@ -68,17 +73,17 @@ def doc_loader(
                 
                 if loaded:
                     data_object = {
-                        "tenant_id": tenant_id,
-                        "doc_id": doc_id,
+                        "tenantId": tenant_id,
+                        "documentId": document_id,
                         "label": label,
-                        "mime_type": mime_type,
-                        "page_contents": [pc.to_dict() for pc in page_contents],
-                        "created_at": created_at,
-                        "chunking_strategy": chunking_strategy,
+                        "mimeType": mime_type,
+                        "pageContents": [pc.to_dict() for pc in page_contents],
+                        "createdAt": created_at.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "chunkingStrategy": chunking_strategy,
                     }
                     try:
                         save(
-                            filename=f"{tenant_id}/{doc_id}.json",
+                            filename=f"{tenant_id}/{document_id}.json",
                             data=data_object
                         )
                     except Exception as e:

@@ -29,38 +29,54 @@ def api_handler(
         'url': req.url,
         'headers': dict(req.headers),
         'params': dict(req.params),
-        'get_body': req.get_body().decode()
     }, indent=2))
+    
+    # Parse request body
+    content_type: Optional[str] = None
+    content_type = req.headers.get('Content-Type', 'application/json')
+    logger.info("(%s) Content-Type: %s", version, content_type)
 
-     # Parse request body
     file: Optional[str] = None
+    created_at = datetime.now()
+    label = created_at.strftime("%Y%m%dT%H%M%S")
+    mime_type = "application/octet-stream"
+    chunking_strategy = "auto"
     try:
         req_body = req.get_json()
     except ValueError:
-        pass
+        logger.info("(%s) Invalid JSON body", version)    
+        file = req.get_body()
     else:
         file = req_body.get("url", req_body.get("content", None))
+        label = req_body.get('label', label)
+        mime_type = req_body.get('mime_type', mime_type)
+        chunking_strategy = req_body.get('chunking_strategy', chunking_strategy)
     
+    document_id = uuid.uuid4().hex
+    
+    # Validate input
     if file is None:
         return func.HttpResponse(
             body="Invalid input",
             status_code=400,
         )
     
-    if file.startswith("https://") or file.startswith("http://"):
+    if (
+        content_type != "application/octet-stream" 
+        and (file.startswith("https://") or file.startswith("http://"))
+    ):
         logger.info("(%s) download: %s ...", version, file)
         file_content = download_file(url=file)
     else:
         file_content = file
 
-    created_at = datetime.now()
-    label = req_body.get('label', created_at.strftime("%Y%m%dT%H%M%S"))
-    mime_type = req_body.get('mimeType', 'auto')
-    chunking_strategy = req_body.get('chunking_strategy', 'auto')
-    doc_id = uuid.uuid4().hex
-
-    logger.info("(%s) doc_id: %s", version, doc_id)
-    logger.info("(%s) file_content: %s", version, file_content)
+    # Log the input
+    logger.info("(%s) tenant_id: %s", version, tenant_id)
+    logger.info("(%s) document_id: %s", version, document_id)
+    if content_type != "application/octet-stream":
+        logger.info("(%s) file_content: %s", version, file_content)
+    else:
+        logger.info("(%s) file_content: %s", version, "binary content")
     logger.info("(%s) mime_type: %s", version, mime_type)
     logger.info("(%s) label: %s", version, label)
     logger.info("(%s) created_at: %s", version, created_at)
@@ -68,7 +84,7 @@ def api_handler(
 
     # load the document and save to blob
     doc_loader(
-        doc_id=doc_id,
+        document_id=document_id,
         tenant_id=tenant_id,
         label=label,
         file_content=file_content,
@@ -78,8 +94,8 @@ def api_handler(
     )
 
     response_body = {
-        "docId": doc_id,
         "tenantId": tenant_id,
+        "documentId": document_id,
         "label": label,
         "mimeType": mime_type,
         "status": "pending",

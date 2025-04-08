@@ -42,6 +42,8 @@ class MistralLoader:
                 "document_url": signed_url.url,
             },
         )
-        logger.info(ocr_response.model_dump())
+        ocr_dump = ocr_response.model_dump()
+        logger.info(ocr_dump)
+        contents = [p["markdown"] for p in ocr_dump["pages"]]
 
-        return ocr_response.model_dump()
+        return contents

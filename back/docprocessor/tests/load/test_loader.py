@@ -24,7 +24,7 @@ def test_doc_loader_text(mime_type, file_content):
 
     result = doc_loader(
         tenant_id="ptbdnr",
-        doc_id="123",
+        document_id="123",
         label="test_label",
         file_content=file_content, 
         mime_type=mime_type,
@@ -47,7 +47,7 @@ def test_doc_loader_pdf(mime_type, filepath):
 
     result = doc_loader(
         tenant_id="ptbdnr",
-        doc_id="123",
+        document_id="123",
         label="test_label",
         file_content=file_content, 
         mime_type=mime_type,

@@ -5,7 +5,7 @@ from dataclasses import dataclass, asdict
 @dataclass
 class PageContent:
     """A class to represent the content of a page."""
-    content: str
+    page_content: str
     title: Optional[str] = None
 
     def to_dict(self) -> dict:

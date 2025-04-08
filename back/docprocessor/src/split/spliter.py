@@ -1,36 +1,52 @@
+import logging
+import json
 from langchain.text_splitter import RecursiveCharacterTextSplitter 
 
 from src.models.chunk import Chunk
+from src.store.blob import load
 
 MAX_CHUNK_SIZE = 800
 MAX_OVERLAP = 200
 
 def doc_splitter(
-        page_contents: list[dict],
-        chunking_strategy: str = "auto",
+        tenant_id: str,
+        document_id: str,
 ) -> dict:
     """Split the content into chunks based on the specified chunking strategy."""
+    
+    # load the content
+    content = json.loads(load(filename=f"{tenant_id}/{document_id}.json"))
+    logging.info("Loaded content: %s", content)
+    chunking_strategy = content.get("chunkingStrategy", "auto")
+    page_contents = content.get("pageContents", [])
+    text_to_split = '\n'.join([p.get("page_content", "") for p in page_contents])
+
     if chunking_strategy in ["auto", "fix"]:
         # chunking strategy
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=MAX_CHUNK_SIZE, 
             chunk_overlap=MAX_OVERLAP
         )
-        chunks = text_splitter.split_documents(page_contents)
+        raw_chunks = text_splitter.split_text(text_to_split)
     
     elif chunking_strategy == "semantic":
         # semantic chunking strategy
-        separators = infer_separators(page_contents)    
+        separators = infer_separators(text_to_split)    
         text_splitter = RecursiveCharacterTextSplitter(
             separators=separators,
             chunk_size=MAX_CHUNK_SIZE, 
             chunk_overlap=MAX_OVERLAP
         )
-        chunks = text_splitter.split_documents(page_contents)
+        raw_chunks = text_splitter.split_text(text_to_split)
+    
+    logging.info("Split content into %d chunks", len(raw_chunks))
+    logging.info("Raw chunks: %s", [c for c in raw_chunks])
+
+    chunks = [Chunk(text=c) for c in raw_chunks]
 
     return {
-        "chunks": [Chunk(text=chunk.page_content) for chunk in chunks],
-        "chunking_strategy": chunking_strategy
+        "chunks": [c.to_dict() for c in chunks],
+        "chunkingStrategy": chunking_strategy
     }
 
 def infer_separators(content: str) -> list:
