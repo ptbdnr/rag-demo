@@ -66,7 +66,7 @@ def search_knowledge(
     # build the query
     query=dedent("""
         SELECT TOP @top_k c.text, VectorDistance(c.vector,@embedding) AS SimilarityScore
-        FROM c1 c
+        FROM @container_id c
         WHERE c.tenantId = "@tenant_id"
         ORDER BY VectorDistance(c.vector,@embedding)
     """.strip())
