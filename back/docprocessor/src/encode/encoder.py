@@ -12,8 +12,8 @@ dotenv.load_dotenv(".env.local")
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-API_KEY = os.environ["MISTRAL_API_KEY"]
-MODEL_NAME = "mistral-embed"
+MISTRAL_API_KEY = os.environ["MISTRAL_API_KEY"]
+MISTRAL_MODEL_NAME = os.environ["MISTRAL_MODEL_NAME"]
 
 def doc_encoder(
         tenant_id: str,
@@ -31,9 +31,9 @@ def doc_encoder(
 
     # encode the content
     text_chunks = [item['text'] for item in items]
-    mistral_client = Mistral(api_key=API_KEY)
+    mistral_client = Mistral(api_key=MISTRAL_API_KEY)
     embeddings_batch_response = mistral_client.embeddings.create(
-        model=MODEL_NAME,
+        model=MISTRAL_MODEL_NAME,
         inputs=text_chunks,
     )
     vector_chunks = [e.embedding for e in embeddings_batch_response.data]
@@ -51,6 +51,6 @@ def doc_encoder(
     return {
         "tenantId": tenant_id,
         "documentId": document_id,
-        "embedding_model": MODEL_NAME,
+        "embedding_model": MISTRAL_MODEL_NAME,
         "chunks": [chunk.to_dict() for chunk in chunks],
     }
