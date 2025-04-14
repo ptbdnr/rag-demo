@@ -64,11 +64,17 @@ def search_knowledge(
     query_vector = embeddings_batch_response.data[0].embedding
 
     # build the query
+    # query=dedent("""
+    #     SELECT TOP @top_k
+    #       c.text, VectorDistance(c.vector,@embedding) AS SimilarityScore
+    #     FROM @container_id AS c
+    #     ORDER BY VectorDistance(c.vector,@embedding)
+    # """.strip())
     query=dedent("""
-        SELECT TOP @top_k c.text, VectorDistance(c.vector,@embedding) AS SimilarityScore
-        FROM @container_id c
-        WHERE c.tenantId = "@tenant_id"
-        ORDER BY VectorDistance(c.vector,@embedding)
+        SELECT TOP 5 
+        c1.text, VectorDistance(c1.vector,@embedding) AS SimilarityScore
+        FROM c1
+        ORDER BY VectorDistance(c1.vector,@embedding)
     """.strip())
     parameters=[
         {"name": "@container_id", "value": st.session_state["COSMOSDB_CONTAINER_ID"]},
@@ -85,6 +91,7 @@ def search_knowledge(
     query_results = cosmosdb_client.container.query_items(
         query=query,
         parameters=parameters,
+        enable_cross_partition_query=True,
     )
     return [str(qr) for qr in query_results]
 

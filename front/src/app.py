@@ -43,7 +43,7 @@ def initialize_session_state() -> None:
 
 # Set the page layout to wide
 st.set_page_config(
-    page_title="Snippets",
+    page_title="RagDemo",
     page_icon="🔥",
     layout="wide",
 )
